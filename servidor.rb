@@ -5,36 +5,32 @@ $reg_ip = /(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-
 $tabela_dns = {}
 
 def processar(linha)
-	req_conhecidas = ["REG", "IP"] # Requisições conhecidas
-	falha = 'FALHA'
-	reg_falha = 'REGFALHA'
-	dados = linha.split(" ")       # Quebra a requisição para melhor analise dos dados
-
-	if req_conhecidas.include? dados[0] then
-		if dados[0] == req_conhecidas[0] then
-			if dados.length != 3 then
-				return reg_falha
-			else
-				if $reg_ip.match(dados[2]) then
-					$tabela_dns[dados[1]] = dados[2]
-					print($tabela_dns)
-					puts
-				else
-					return reg_falha
-				end
-			end
-		else
-			return "Ok"
-		end
-	else
-		return falha
-	end
+  req_conhecidas = %w(REG IP) # Requisições conhecidas
+  dados = linha.split(' ') # Quebra a requisição para melhor analise dos dados
+  if req_conhecidas.include? dados[0] then
+    if dados[0] == req_conhecidas[0] then
+      if dados.length != 3 || !$reg_ip.match(dados[2]) then
+        return 'REGFALHA'
+      else
+        $tabela_dns[dados[1]] = dados[2]
+        return 'REGOK'
+      end
+    else
+      if dados.length != 2 || !$tabela_dns.key?(dados[1]) then
+        return 'IPFALHA'
+      else
+        return 'IP %s' % $tabela_dns[dados[1]]
+      end
+    end
+  else
+    return 'FALHA'
+  end
 end
 
 loop {
-	cliente = servidor.accept
-	while linha = cliente.gets.chomp  
-		cliente.puts(processar(linha))
-	end
-	cliente.close
+  cliente = servidor.accept
+  while (linha = cliente.gets.chomp)
+    cliente.puts(processar(linha))
+  end
+  cliente.close
 }
