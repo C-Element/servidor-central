@@ -9,4 +9,14 @@ puts cliente.recvfrom(1024)[0]
 cliente.print 'IP NOME'
 puts cliente.recvfrom(1024)[0]
 
+cliente.print 'REG NOME'
+puts cliente.recvfrom(1024)[0]
+
+cliente.print 'IP NOMES'
+puts cliente.recvfrom(1024)[0]
+
+cliente.print 'Mjolnir'
+puts cliente.recvfrom(1024)[0]
+
+
 cliente.close
