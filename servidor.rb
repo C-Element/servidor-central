@@ -1,6 +1,8 @@
 require 'socket'
 
-servidor = TCPServer.new(2100)
+servidor = UDPSocket.new
+servidor.bind('', 2100)
+
 $reg_ip = /(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
 $tabela_dns = {}
 
@@ -28,9 +30,6 @@ def processar(linha)
 end
 
 loop {
-  cliente = servidor.accept
-  while (linha = cliente.gets.chomp)
-    cliente.puts(processar(linha))
-  end
-  cliente.close
+  linha, cliente = servidor.recvfrom(1024)
+  servidor.send(processar(linha), 0, cliente[3], cliente[1])
 }
