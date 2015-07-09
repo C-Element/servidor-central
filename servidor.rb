@@ -115,7 +115,7 @@ def processar(linha)
         return 'IPFALHA'
       else
         # Se estiver tudo ok retorna o ip referente ao nome informado.
-        return 'IP %s' % consultar(dados[1])
+        return 'IPOK %s' % consultar(dados[1])
       end
     end
   else
