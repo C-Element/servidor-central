@@ -136,5 +136,5 @@ end
 loop {
   # Loop que recebe, processa e retorna os dados via o socket UDP.
   linha, cliente = servidor.recvfrom(1024)
-  servidor.send(processar(linha), 0, cliente[3], cliente[1])
+  servidor.send(processar(linha.chomp), 0, cliente[3], cliente[1])
 }
