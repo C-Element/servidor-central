@@ -10,11 +10,17 @@ $reg_ip = /(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-
 # Tabela de armazenamento de nomes na memória.
 $tabela_dns = {}
 # Flag que armazena se o script está rodando em modo de base de dados.
-$f_bd = false
+$f_bd = true
 
 # Verificando se algum argumento válido foi passado na linha de comando.
-if ARGV.include? '-b' or ARGV.include? '--banco' then
-  $f_bd = true
+if ARGV.include? '-m' or ARGV.include? '--memory' then
+  # Inicia em modo memória.
+  $f_bd = false
+elsif ARGV.include? '-c' or ARGV.include? '--clear' then
+  # Limpa a base de dados na inicialização do sistema.
+  SQLite3::Database.new(BASE_DE_DADOS) do |bd|
+    bd.execute('delete from name_ip')
+  end
 end
 
 # Inicializando a variável servidor com um socket UDP.
@@ -100,18 +106,28 @@ def processar(linha)
   if req_conhecidas.include? dados[0] then
     # Verificando se é uma requisição REG
     if dados[0] == req_conhecidas[0] then
-      # Se a quantidade de palavras for diferente de 3 ou a terceira palavra não for um IPv4 retorna REGFALHA
-      if dados.length != 3 || !$reg_ip.match(dados[2]) then
+      # Se a quantidade de palavras for diferente de 3 retorna FALHA
+      if dados.length != 3 then
+        return 'FALHA'
+      # Se a terceira palavra não for um IPv4 retorna REGFALHA
+      elsif !$reg_ip.match(dados[2]) then
         return 'REGFALHA'
       else
-        # Se estiver tudo ok registra o nome no sistema.
-        registrar(dados[1], dados[2])
-        return 'REGOK'
+        # Se o nome ja estiver registrado retorna regfalha
+        if consultar(dados[1]) then
+          return 'REGFALHA'
+          # Se estiver tudo ok registra o nome no sistema.
+        else
+          registrar(dados[1], dados[2])
+          return 'REGOK'
+        end
       end
     else
-      # Se a requisição for IP e a quantidade de palavras for diferente de 2 ou o nome informado ainda não foi
-      # registrado retorna um IPFALHA
-      if dados.length != 2 || !consultar(dados[1]) then
+      # Se a requisição for IP e a quantidade de palavras for diferente de 2 retorna FALHA
+      if dados.length != 2 then
+        return 'FALHA'
+      # Se o nome informado ainda não foi registrado retorna um IPFALHA.
+      elsif !consultar(dados[1]) then
         return 'IPFALHA'
       else
         # Se estiver tudo ok retorna o ip referente ao nome informado.
@@ -134,7 +150,10 @@ end
 
 
 loop {
-  # Loop que recebe, processa e retorna os dados via o socket UDP.
-  linha, cliente = servidor.recvfrom(1024)
-  servidor.send(processar(linha.chomp), 0, cliente[3], cliente[1])
+  # Loop que recebe, processa e retorna os dados via o socket UDP. Continuando mesmo em caso de exceção.
+  begin
+    linha, cliente = servidor.recvfrom(1024)
+    servidor.send(processar(linha.chomp).force_encoding('ascii-8bit'), 0, cliente[3], cliente[1])
+  rescue
+  end
 }

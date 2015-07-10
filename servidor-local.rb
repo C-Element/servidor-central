@@ -3,20 +3,7 @@ require 'socket'
 cliente = UDPSocket.new
 cliente.connect('localhost', 2100)
 
-cliente.print 'REG NOME 10.10.1.10'
+cliente.print 'REG acari 127.0.0.1'
 puts cliente.recvfrom(1024)[0]
-
-cliente.print 'IP NOME'
-puts cliente.recvfrom(1024)[0]
-
-cliente.print 'REG NOME'
-puts cliente.recvfrom(1024)[0]
-
-cliente.print 'IP NOMES'
-puts cliente.recvfrom(1024)[0]
-
-cliente.print 'Mjolnir'
-puts cliente.recvfrom(1024)[0]
-
 
 cliente.close
